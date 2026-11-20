@@ -6,6 +6,9 @@ import {
   nextPosition,
   latestSurvey,
   knownPlayers,
+  transcriptEntries,
+  pollResponses,
+  voteTally,
 } from "./replay.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -230,11 +233,27 @@ function renderRoster() {
     )
     .join("");
 }
+function renderPoll(poll) {
+  const responses = pollResponses(poll, perspective);
+  const highest = Math.max(0, ...poll.responses.map((r) => r.urgency || 0));
+  const tied = poll.responses.filter((r) => r.urgency === highest).length > 1;
+  return `<article class="poll-entry" aria-label="Urgency poll ${poll.poll}">
+    <div class="poll-heading"><strong>Urgency poll ${poll.poll}</strong><span>${poll.selected ? `Floor to ${esc(name(poll.selected))}` : "No speaker selected"}${perspective === "researcher" && poll.selected && tied ? " · random tiebreak" : ""}</span></div>
+    ${responses.length ? `<div class="poll-responses">${responses.map((r) => `<span class="poll-score ${r.player === poll.selected ? "chosen" : ""}">${esc(name(r.player))} <strong>${r.urgency == null ? "Pass" : `${r.urgency}/10`}</strong></span>`).join("")}</div>` : ""}
+    ${perspective !== "researcher" ? `<small>${perspective === "spectator" ? "Scores are private · choose Researcher to inspect" : "Only your own urgency is visible"}</small>` : ""}
+  </article>`;
+}
+function renderTally(event) {
+  const tally = voteTally(event);
+  return `<div class="vote-summary"><div><strong>Final tally</strong><span>${tally.total} ballots${tally.threshold ? ` · ${tally.threshold} needed ${event.type === "team-vote" ? "to approve" : "to eliminate"}` : ""}</span></div>
+    <div class="tally-counts">${tally.rows.map((row) => `<span><strong>${esc(event.type === "team-vote" ? row.target : name(row.target))}</strong><b>${row.count}</b></span>`).join("")}</div></div>`;
+}
 function renderTranscript() {
-  const events = visibleEvents(game, perspective, position);
+  const events = transcriptEntries(game, perspective, position);
   $("#transcript").innerHTML =
     events
       .map((e, i) => {
+        if (e.type === "urgency-poll") return renderPoll(e);
         const phase =
           game.game === "mafia"
             ? `Day ${e.day || 1}`
@@ -243,7 +262,9 @@ function renderTranscript() {
         return `<article class="event ${e.type === "speech" ? "" : "system"} ${e.visibility !== "public" ? "private" : ""} ${i === events.length - 1 ? "latest" : ""}">
       <div class="event-head"><strong>${esc(e.player ? name(e.player) : "Game moderator")}</strong><small>${phase} · ${esc(title(e.type))}</small>
       ${e.visibility !== "public" ? '<span class="tag">Private</span>' : ""}<small class="event-index">${esc(e.id)}</small></div>
-      <p>${esc(e.text)}</p>${Array.isArray(votes) && votes.length ? `<div class="ballots">${votes.map((v) => `<span>${esc(name(v.player))}: ${v.approve === undefined ? esc(name(v.target)) : v.approve ? "Approve" : "Reject"}</span>`).join("")}</div>` : ""}</article>`;
+      <p>${esc(e.text)}</p>${Array.isArray(votes) && votes.length ? `<div class="ballots">${votes.map((v) => `<span>${esc(name(v.player))}: ${v.approve === undefined ? esc(name(v.target)) : v.approve ? "Approve" : "Reject"}</span>`).join("")}</div>` : ""}
+      ${["votes", "team-vote"].includes(e.type) ? renderTally(e) : ""}
+      ${e.type === "speech" && Object.hasOwn(e, "yieldTo") ? `<div class="yield-note">${e.yieldTo ? `Yields to <strong>${esc(name(e.yieldTo))}</strong>` : "No yield"}</div>` : ""}</article>`;
       })
       .join("") ||
     `<div class="empty"><span aria-hidden="true">◈</span><h3>The table is set.</h3><p>Press Play replay or Next to reveal the first event.<br>Use Full game to read the complete transcript.</p></div>`;

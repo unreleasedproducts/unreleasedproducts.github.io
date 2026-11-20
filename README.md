@@ -16,6 +16,10 @@ and that game's belief surveys on demand. It makes no model requests and needs n
 - Beliefs show the latest survey frozen at or before the replay position. Delayed
   survey collection does not move the checkpoint.
 - Copy the address bar to share the game, replay position, and perspective.
+- Compact urgency-poll rows sit between messages. Researcher shows all urgency
+  scores; player view shows only that player's score. Spectator hides the scores.
+- Speech footers show who received a yield. Each vote includes individual ballots
+  and a final tally, including abstentions and the required approval/elimination count.
 
 Perspectives are display filters, not access controls. The public JSON includes hidden
 roles and private events. Surveys are elicited self-reports, not verified internal reasoning.
@@ -48,6 +52,9 @@ It selects replay fields, player/model labels, and belief reports. It omits raw 
 call logs, request prompts, connection settings, and server files. The manifest records
 the release, source repository, archive hashes, and per-game counts. Source recordings
 remain unchanged. The export contains 17,469 events and 107,920 surveys across 200 games.
+It also includes 7,217 urgency polls and 6,341 yields. Poll rows are placed using the
+recorded urgency-call start times; speech yields match the saved turn order. Polls
+appear with the next logged event, preserving original event IDs and survey checkpoints.
 
 ## Publish
 

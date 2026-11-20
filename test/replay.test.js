@@ -5,7 +5,81 @@ import {
   nextPosition,
   latestSurvey,
   knownPlayers,
+  transcriptEntries,
+  pollResponses,
+  voteTally,
 } from "../docs/replay.js";
+
+test("polls stay between their original events, including repeated polls after a declined turn", () => {
+  const recording = {
+    players: [],
+    events: [
+      { id: "e1", visibility: "public" },
+      { id: "e2", visibility: "public" },
+    ],
+    polls: [
+      { id: "poll-1", afterEventCount: 1 },
+      { id: "poll-2", afterEventCount: 1 },
+    ],
+  };
+  assert.deepEqual(
+    transcriptEntries(recording, "spectator", 1).map((e) => e.id),
+    ["e1"],
+  );
+  assert.deepEqual(
+    transcriptEntries(recording, "spectator", 2).map((e) => e.id),
+    ["e1", "poll-1", "poll-2", "e2"],
+  );
+});
+test("urgency scores respect the selected perspective", () => {
+  const poll = {
+    responses: [
+      { player: "p1", urgency: 8 },
+      { player: "p2", urgency: null },
+    ],
+  };
+  assert.deepEqual(pollResponses(poll, "spectator"), []);
+  assert.deepEqual(pollResponses(poll, "p2"), [
+    { player: "p2", urgency: null },
+  ]);
+  assert.equal(pollResponses(poll, "researcher").length, 2);
+});
+test("final vote counts include ties, abstentions, and the recorded threshold", () => {
+  const tally = voteTally({
+    type: "votes",
+    minimumVotes: 3,
+    ballots: [
+      { target: "p1" },
+      { target: "p2" },
+      { target: null },
+      { target: "p1" },
+      { target: "p2" },
+    ],
+  });
+  assert.deepEqual(tally, {
+    total: 5,
+    threshold: 3,
+    rows: [
+      { target: "p1", count: 2 },
+      { target: "p2", count: 2 },
+      { target: null, count: 1 },
+    ],
+  });
+  assert.deepEqual(
+    voteTally({
+      type: "team-vote",
+      votes: [{ approve: true }, { approve: false }, { approve: false }],
+    }),
+    {
+      total: 3,
+      threshold: 2,
+      rows: [
+        { target: "Approve", count: 1 },
+        { target: "Reject", count: 2 },
+      ],
+    },
+  );
+});
 
 const game = {
   players: [

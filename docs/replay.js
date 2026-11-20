@@ -83,3 +83,56 @@ export function knownPlayers(game, player) {
   }
   return [];
 }
+
+// Polls are attached to the next logged event so event IDs and survey checkpoints
+// stay unchanged. Multiple polls can precede one message when turns are declined.
+export function transcriptEntries(game, perspective, position) {
+  const entries = [];
+  for (let i = 0; i < Math.min(position, game.events.length); i++) {
+    for (const poll of game.polls || []) {
+      if (poll.afterEventCount === i)
+        entries.push({ type: "urgency-poll", ...poll });
+    }
+    const event = game.events[i];
+    if (visibleEvent(event, perspective, game.players)) entries.push(event);
+  }
+  return entries;
+}
+
+export function pollResponses(poll, perspective) {
+  if (perspective === "researcher") return poll.responses;
+  return poll.responses.filter((response) => response.player === perspective);
+}
+
+export function voteTally(event) {
+  if (event.type === "team-vote") {
+    const votes = event.votes || [];
+    return {
+      total: votes.length,
+      threshold: Math.floor(votes.length / 2) + 1,
+      rows: [
+        {
+          target: "Approve",
+          count: votes.filter((v) => v.approve === true).length,
+        },
+        {
+          target: "Reject",
+          count: votes.filter((v) => v.approve === false).length,
+        },
+      ],
+    };
+  }
+  const votes = event.ballots || [];
+  const counts = new Map();
+  for (const vote of votes) {
+    const target = vote.target || null;
+    counts.set(target, (counts.get(target) || 0) + 1);
+  }
+  return {
+    total: votes.length,
+    threshold: event.minimumVotes,
+    rows: [...counts]
+      .map(([target, count]) => ({ target, count }))
+      .sort((a, b) => b.count - a.count),
+  };
+}
