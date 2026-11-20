@@ -14,6 +14,73 @@
   --accent: #066b66;
   --soft: #e8f5f1;
 }
+.mission-cell {
+  --mission-color: #365ca6;
+  --mission-background: #edf2fd;
+  --mission-border: #c3d2ef;
+  margin: 12px 0 22px;
+  background: var(--mission-background);
+  border: 1px solid var(--mission-border);
+  border-left: 4px solid var(--mission-color);
+  border-radius: 10px;
+}
+.mission-2 {
+  --mission-color: #7751a0;
+  --mission-background: #f4eefb;
+  --mission-border: #dbcbed;
+}
+.mission-3 {
+  --mission-color: #9a591f;
+  --mission-background: #fff3e7;
+  --mission-border: #efd2b5;
+}
+.mission-4 {
+  --mission-color: #287768;
+  --mission-background: #eaf7f1;
+  --mission-border: #bce0d2;
+}
+.mission-5 {
+  --mission-color: #9b4964;
+  --mission-background: #fceef3;
+  --mission-border: #edc6d4;
+}
+.mission-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 12px 14px;
+  margin: 0;
+  border-bottom: 1px solid var(--mission-border);
+  border-radius: 6px 9px 0 0;
+  background: var(--mission-background);
+  color: var(--mission-color);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.mission-content {
+  padding: 0 10px 10px;
+}
+.mission-content > .event {
+  margin: 10px 0;
+  padding: 14px;
+  background: white;
+  border: 1px solid #e1e7ed;
+  border-radius: 7px;
+}
+.mission-content > .event:last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 780px) {
+  .mission-content {
+    padding: 0 7px 7px;
+  }
+  .mission-content > .event {
+    padding: 11px;
+  }
+  .mission-heading {
+    padding: 10px 11px;
+  }
+}
 .poll-entry {
   margin: 12px 0;
   padding: 10px 12px;

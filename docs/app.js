@@ -250,23 +250,41 @@ function renderTally(event) {
 }
 function renderTranscript() {
   const events = transcriptEntries(game, perspective, position);
-  $("#transcript").innerHTML =
-    events
-      .map((e, i) => {
-        if (e.type === "urgency-poll") return renderPoll(e);
-        const phase =
-          game.game === "mafia"
-            ? `Day ${e.day || 1}`
-            : `Mission ${e.mission || 1}`;
-        const votes = e.ballots || e.votes || [];
-        return `<article class="event ${e.type === "speech" ? "" : "system"} ${e.visibility !== "public" ? "private" : ""} ${i === events.length - 1 ? "latest" : ""}">
+  const rendered = events.map((e, i) => {
+    if (e.type === "urgency-poll") return renderPoll(e);
+    const phase =
+      game.game === "mafia" ? `Day ${e.day || 1}` : `Mission ${e.mission || 1}`;
+    const votes = e.ballots || e.votes || [];
+    return `<article class="event ${e.type === "speech" ? "" : "system"} ${e.visibility !== "public" ? "private" : ""} ${i === events.length - 1 ? "latest" : ""}">
       <div class="event-head"><strong>${esc(e.player ? name(e.player) : "Game moderator")}</strong><small>${phase} · ${esc(title(e.type))}</small>
       ${e.visibility !== "public" ? '<span class="tag">Private</span>' : ""}<small class="event-index">${esc(e.id)}</small></div>
       <p>${esc(e.text)}</p>${Array.isArray(votes) && votes.length ? `<div class="ballots">${votes.map((v) => `<span>${esc(name(v.player))}: ${v.approve === undefined ? esc(name(v.target)) : v.approve ? "Approve" : "Reject"}</span>`).join("")}</div>` : ""}
       ${["votes", "team-vote"].includes(e.type) ? renderTally(e) : ""}
       ${e.type === "speech" && Object.hasOwn(e, "yieldTo") ? `<div class="yield-note">${e.yieldTo ? `Yields to <strong>${esc(name(e.yieldTo))}</strong>` : "No yield"}</div>` : ""}</article>`;
-      })
-      .join("") ||
+  });
+  let transcript = rendered.join("");
+  if (game.game === "avalon") {
+    const missions = [];
+    events.forEach((event, index) => {
+      const mission = Number(event.mission) || 1;
+      if (missions.at(-1)?.number !== mission) {
+        missions.push({ number: mission, entries: [] });
+      }
+      missions.at(-1).entries.push(rendered[index]);
+    });
+    transcript = missions
+      .map(
+        (
+          mission,
+        ) => `<section class="mission-cell mission-${mission.number}" aria-label="Mission ${mission.number}">
+      <h3 class="mission-heading">Mission ${mission.number}</h3>
+      <div class="mission-content">${mission.entries.join("")}</div>
+    </section>`,
+      )
+      .join("");
+  }
+  $("#transcript").innerHTML =
+    transcript ||
     `<div class="empty"><span aria-hidden="true">◈</span><h3>The table is set.</h3><p>Press Play replay or Next to reveal the first event.<br>Use Full game to read the complete transcript.</p></div>`;
   const last = events.at(-1);
   $("#phase").textContent = last
