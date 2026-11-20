@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Replay 200 Mafia and Avalon games played by seven language models. Explore conversations, votes, private roles, and recorded belief surveys."
+    />
+    <meta name="color-scheme" content="light" />
+    <title>Social Observatory · Game archive</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#replay">Skip to replay</a>
+    <header class="topbar">
+      <a class="brand" href="./"
+        ><span class="brand-icon" aria-hidden="true">◈</span> Social
+        <strong>Observatory</strong></a
+      >
+      <nav aria-label="Site">
+        <span class="release">Dataset 0.0.1</span
+        ><a
+          href="https://github.com/unreleasedproducts/unreleasedproducts.github.io"
+          >GitHub</a
+        ><button id="about-button" class="quiet">About the data</button>
+      </nav>
+    </header>
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">THE SOCIAL DEDUCTION ARCHIVE</p>
+          <h1>Watch models read the room.</h1>
+          <p>
+            Follow the conversation. Trace the votes. See how beliefs change.
+          </p>
+        </div>
+        <div class="totals" aria-label="Dataset totals">
+          <div><strong>200</strong><span>recorded games</span></div>
+          <div><strong>7</strong><span>language models</span></div>
+          <div><strong>107,920</strong><span>belief surveys</span></div>
+        </div>
+      </section>
+      <p id="error" class="error" role="alert" hidden></p>
+      <div class="workspace">
+        <aside class="archive panel" aria-label="Game archive">
+          <div class="archive-head">
+            <h2>Recordings</h2>
+            <span id="game-count" class="count">200</span>
+          </div>
+          <div class="tabs" role="group" aria-label="Game type">
+            <button data-game="mafia" aria-pressed="true">
+              Mafia <span>100</span></button
+            ><button data-game="avalon" aria-pressed="false">
+              Avalon <span>100</span>
+            </button>
+          </div>
+          <label class="search"
+            ><span class="sr-only">Search games by number, seed, or model</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Search games or models"
+          /></label>
+          <label class="filter"
+            >Outcome
+            <select id="outcome">
+              <option value="all">Any outcome</option>
+            </select></label
+          >
+          <div id="game-list" class="game-list">
+            <p class="muted">Loading recordings…</p>
+          </div>
+          <div class="archive-foot">Completed games · November 18–19, 2026</div>
+        </aside>
+        <section
+          id="replay"
+          class="replay panel"
+          aria-label="Game replay"
+          tabindex="-1"
+          aria-busy="true"
+        >
+          <div class="replay-head">
+            <div>
+              <p class="eyebrow" id="game-subtitle">LOADING ARCHIVE</p>
+              <h2 id="game-title">Select a recording</h2>
+            </div>
+            <a id="download" class="quiet" hidden download>Download replay</a>
+          </div>
+          <div id="game-meta" class="game-meta"></div>
+          <div class="perspective-row">
+            <label for="perspective">Perspective</label
+            ><select id="perspective" disabled>
+              <option value="spectator">Spectator · hidden roles</option>
+            </select>
+          </div>
+          <div id="roster" class="roster"></div>
+          <div class="playback">
+            <div class="playback-buttons">
+              <button id="restart" title="Restart replay" disabled>
+                Restart</button
+              ><button id="previous" title="Previous visible event" disabled>
+                Back</button
+              ><button id="play" class="primary" disabled>Play replay</button
+              ><button id="next" title="Next visible event" disabled>
+                Next</button
+              ><button id="finish" disabled>Full game</button>
+            </div>
+            <div class="timeline">
+              <input
+                id="timeline"
+                type="range"
+                min="0"
+                max="1"
+                value="0"
+                aria-label="Replay position"
+                disabled
+              /><output id="position">0 / 0</output>
+            </div>
+            <div class="playback-detail">
+              <span id="phase">Beginning of recording</span
+              ><label
+                >Speed
+                <select id="speed">
+                  <option value="3500">Slow</option>
+                  <option value="1800" selected>Normal</option>
+                  <option value="700">Fast</option>
+                </select></label
+              ><label class="follow"
+                ><input id="follow" type="checkbox" checked /> Follow
+                playback</label
+              >
+            </div>
+          </div>
+          <div
+            id="transcript"
+            class="transcript"
+            aria-label="Conversation transcript"
+          >
+            <div class="empty">
+              <span aria-hidden="true">◈</span>
+              <h3>Every decision leaves a trace.</h3>
+              <p>Choose a game to start exploring.</p>
+            </div>
+          </div>
+        </section>
+        <aside class="inspector panel" aria-label="Player and belief inspector">
+          <div class="inspector-head">
+            <p class="eyebrow">INSIDE THE GAME</p>
+            <h2>Players & beliefs</h2>
+          </div>
+          <p id="perspective-note" class="note">
+            Spectators see public events. Select a player’s perspective or the
+            researcher view to inspect recorded beliefs.
+          </p>
+          <div id="knowledge"></div>
+          <div id="survey-controls" hidden>
+            <label class="field"
+              >Survey respondent<select id="respondent"></select
+            ></label>
+            <p id="survey-status" class="muted" aria-live="polite"></p>
+            <div id="beliefs"></div>
+          </div>
+          <div class="inspector-foot">
+            <strong>A record of self-reports.</strong>
+            <p>
+              Belief surveys are the models’ stated probabilities at each
+              checkpoint, not verified internal reasoning.
+            </p>
+            <p>
+              Perspectives filter the replay display. This public dataset
+              includes all roles and private events.
+            </p>
+          </div>
+        </aside>
+      </div>
+      <footer>
+        Social Observatory <span>Seven models. Two games. A shared record.</span
+        ><a href="./data/manifest.json">Dataset manifest</a>
+      </footer>
+    </main>
+    <dialog id="about">
+      <form method="dialog">
+        <button class="close" aria-label="Close data details">Close</button>
+      </form>
+      <p class="eyebrow">DATASET 0.0.1</p>
+      <h2>200 games, replayed in your browser.</h2>
+      <p>
+        This archive contains 100 nine-player Mafia games and 100 five-player
+        Avalon games, played on November 18–19, 2026.
+      </p>
+      <p>
+        Seven models take part: GPT-6.1 Terra, Claude Haiku 5.5, Gemini 3.8
+        Flash, DeepSeek V4.1 Flash, GLM 5.3 Flash, MiMo V2.6 Flash, and MiniMax
+        M3.1 Flash. These are recorded experiments; replaying a game makes no
+        model requests.
+      </p>
+      <p>
+        Use <strong>Spectator</strong> to follow public discussion without role
+        labels. A <strong>player perspective</strong> adds that player’s private
+        information. <strong>Researcher</strong> reveals all roles, private
+        events, and belief surveys.
+      </p>
+      <p>
+        All views follow event order. Beliefs are shown at their frozen
+        checkpoint, even when the survey response was collected after gameplay.
+      </p>
+      <p>
+        Downloads contain the replay fields used here. Raw prompts, model-call
+        logs, and operational configuration are not included in this viewer.
+        Source archive checksums are recorded in the
+        <a href="./data/manifest.json">manifest</a>.
+      </p>
+    </dialog>
+    <noscript
+      >This archive needs JavaScript to replay games. You can also download the
+      JSON recordings from the
+      <a href="./data/manifest.json">dataset manifest</a>.</noscript
+    >
+  </body>
+</html>
