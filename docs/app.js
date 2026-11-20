@@ -131,6 +131,7 @@ async function loadGame(
   ++surveyRequest;
   stop();
   $("#replay").setAttribute("aria-busy", "true");
+  $("#chapter-jumps").hidden = true;
   $("#error").hidden = true;
   // Disable the previous recording while the new one is loading.
   for (const id of [
@@ -188,6 +189,23 @@ async function loadGame(
     $("#perspective").disabled = false;
     $("#timeline").max = game.events.length;
     $("#timeline").disabled = false;
+    const chapterField = game.game === "mafia" ? "day" : "mission";
+    const chapterLabel = game.game === "mafia" ? "Day" : "Mission";
+    const chapters = new Map();
+    game.events.forEach((event, index) => {
+      const chapter = Number(event[chapterField]);
+      if (chapter > 0 && !chapters.has(chapter))
+        chapters.set(chapter, index + 1);
+    });
+    $("#chapter-jumps").innerHTML =
+      "<span>Jump to</span>" +
+      [...chapters]
+        .map(
+          ([chapter, start]) =>
+            `<button type="button" data-chapter="${chapter}" data-position="${start}" title="Jump to the start of ${chapterLabel.toLowerCase()} ${chapter}">${chapterLabel} ${chapter}</button>`,
+        )
+        .join("");
+    $("#chapter-jumps").hidden = chapters.size === 0;
     $("#replay").setAttribute("aria-busy", "false");
     renderList();
     render();
@@ -348,6 +366,13 @@ function renderInspector() {
 }
 function render() {
   if (!game) return;
+  const currentChapter =
+    game.events[position - 1]?.[game.game === "mafia" ? "day" : "mission"];
+  for (const button of $("#chapter-jumps").querySelectorAll("button")) {
+    if (Number(button.dataset.chapter) === currentChapter)
+      button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
+  }
   $("#timeline").value = position;
   $("#position").textContent = `${position} / ${game.events.length}`;
   $("#timeline").setAttribute(
@@ -427,6 +452,23 @@ $("#finish").onclick = () => {
 $("#timeline").oninput = () => {
   stop();
   seek($("#timeline").value);
+};
+$("#chapter-jumps").onclick = (event) => {
+  const button = event.target.closest("button[data-position]");
+  if (!button || !game || $("#replay").getAttribute("aria-busy") === "true")
+    return;
+  stop();
+  seek(Number(button.dataset.position));
+  // A deliberate jump should reveal the destination even with follow disabled.
+  $("#transcript").scrollTo({
+    top: $("#transcript").scrollHeight,
+    behavior: "instant",
+  });
+  const entries = $("#transcript").querySelectorAll(".event");
+  entries[entries.length - 1]?.scrollIntoView({
+    block: "nearest",
+    behavior: "instant",
+  });
 };
 $("#play").onclick = () => (timer ? stop() : start());
 $("#speed").onchange = () => {

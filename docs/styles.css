@@ -81,6 +81,30 @@
     padding: 10px 11px;
   }
 }
+.chapter-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.chapter-jumps > span {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin-right: 3px;
+}
+.chapter-jumps button {
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+}
+.chapter-jumps button[aria-current="step"],
+.chapter-jumps button[aria-current="step"]:hover:not(:disabled) {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
 .poll-entry {
   margin: 12px 0;
   padding: 10px 12px;
