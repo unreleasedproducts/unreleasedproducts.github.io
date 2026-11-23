@@ -4,6 +4,24 @@ Static replays of 100 Mafia and 100 Avalon games from dataset release 0.0.1.
 
 **Website:** https://unreleasedproducts.github.io/
 
+## Metrics viewer
+
+The **Metrics** tab at https://unreleasedproducts.github.io/metrics.html compares
+35 Mafia and 34 Avalon measures from the paper results bundled in release 0.0.1.
+Choose a metric to see all seven model estimates, 95% game-bootstrap intervals,
+numerators, denominators, and contributing games. The pooled estimate preserves
+the source weighting; it is not an average of model averages. Faction-deduction
+trends support model and checkpoint selection, with always-good baselines and
+sample sizes. Share the URL to retain all selections, or download the static JSON.
+
+To reproduce the export, download the derived/code release archive alongside the
+raw archives and run `python scripts/export_metrics.py /path/to/release-assets`.
+The exporter verifies its release SHA-256 and confirms every source game ID matches
+the replay manifest. It exports aggregates only, excluding per-game analysis,
+operational paths and raw calls. Overview counts use the replay manifest because
+the source metric report counts survey calls rather than accepted replay reports.
+The JSON records archive and original results hashes for provenance.
+
 The site runs entirely in the browser. It loads a small catalog, one selected game,
 and that game's belief surveys on demand. It makes no model requests and needs no API keys.
 

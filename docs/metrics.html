@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Explore model performance, beliefs, and social behavior across 200 recorded Mafia and Avalon games." />
+  <meta name="color-scheme" content="light" />
+  <title>Social Observatory · Metrics</title>
+  <link rel="stylesheet" href="./styles.css?v=metrics-1" />
+  <script type="module" src="./metrics.js?v=metrics-1"></script>
+</head>
+<body>
+  <a class="skip" href="#metrics">Skip to metrics</a>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">◈</span> Social <strong>Observatory</strong></a>
+    <nav aria-label="Site"><span class="release">Dataset 0.0.1</span><a href="https://github.com/unreleasedproducts/unreleasedproducts.github.io">GitHub</a><a href="#methodology">About the metrics</a></nav>
+  </header>
+  <main>
+    <nav class="view-tabs" aria-label="Archive views"><a href="./">Replays</a><a href="./metrics.html" aria-current="page">Metrics</a></nav>
+    <section class="intro">
+      <div><p class="eyebrow">THE SOCIAL DEDUCTION ARCHIVE</p><h1>From moves to measures.</h1><p>Compare outcomes, beliefs, and social behavior across seven models.</p></div>
+      <a class="metrics-download" href="./data/metrics.json" download>Download metrics JSON</a>
+    </section>
+    <p id="metrics-error" class="error" role="alert" hidden></p>
+    <section id="metrics" tabindex="-1" aria-busy="true">
+      <div class="metrics-toolbar">
+        <div class="tabs" role="group" aria-label="Metrics game"><button data-kind="mafia" aria-pressed="true">Mafia</button><button data-kind="avalon" aria-pressed="false">Avalon</button></div>
+        <p class="muted">Dataset 0.0.1 · November 18–19, 2026 · 100 games per game type</p>
+      </div>
+      <div id="metrics-overview" class="metrics-overview" aria-label="Game totals"></div>
+      <section class="panel metric-panel" aria-labelledby="comparison-title">
+        <div class="metric-heading"><div><p class="eyebrow">MODEL COMPARISON</p><h2 id="comparison-title">Compare a metric</h2></div><label class="metric-picker">Metric<select id="metric-select" disabled></select></label></div>
+        <div class="metric-context"><div><h3 id="metric-title">Loading metrics…</h3><p id="metric-description" class="muted"></p></div><div id="metric-pooled" class="metric-pooled"></div></div>
+        <div id="comparison-chart" class="comparison-chart" aria-label="Model comparison chart"></div>
+        <p class="muted metric-caption">Dots show estimates. Lines show 95% intervals from 1,000 resamples of whole games. Model order is fixed, not a ranking.</p>
+        <div class="metric-table-wrap" tabindex="0" role="region" aria-label="Model comparison values"><table class="metric-table"><caption class="sr-only">Exact comparison values and sample sizes</caption><thead><tr><th scope="col">Model</th><th scope="col">Estimate</th><th scope="col">95% interval</th><th scope="col">Numerator / denominator</th><th scope="col">Games</th></tr></thead><tbody id="comparison-values"></tbody></table></div>
+        <p class="muted metric-caption">Denominators depend on the metric: seats, ballots, speeches, belief pairs, or other eligible observations. Multiple observations can come from one game. Numerators may be fractional or signed sums.</p>
+      </section>
+      <section class="panel metric-panel" aria-labelledby="trend-title">
+        <div class="metric-heading"><div><p class="eyebrow">OVER THE COURSE OF A GAME</p><h2 id="trend-title">Faction deduction by day</h2></div><div class="trend-controls"><label>Model<select id="trend-model" disabled></select></label><label>Checkpoint<select id="trend-phase" disabled><option value="post">After vote / mission result</option><option value="pre">Start of day / mission</option></select></label></div></div>
+        <p id="trend-description" class="muted"></p>
+        <div id="trend-chart" class="trend-chart"></div>
+        <div class="metric-table-wrap" tabindex="0" role="region" aria-label="Trend values"><table class="metric-table"><caption class="sr-only">Faction deduction by checkpoint</caption><thead><tr><th scope="col">Checkpoint</th><th scope="col">Accuracy</th><th scope="col">95% interval</th><th scope="col">Always-good baseline (pooled)</th><th scope="col">Observations</th><th scope="col">Games</th></tr></thead><tbody id="trend-values"></tbody></table></div>
+        <p class="muted metric-caption">Later checkpoints include only surviving observers in games still running. Smaller, selected samples can change the apparent trend; these are not the same players followed to the end.</p>
+      </section>
+    </section>
+    <section id="methodology" class="panel metric-panel" aria-labelledby="method-title">
+      <p class="eyebrow">READING THE RESULTS</p><h2 id="method-title">Definitions, samples, and uncertainty</h2>
+      <div class="method-grid">
+        <div><h3>One published snapshot</h3><p>The values come directly from the paper-metrics results bundled with release 0.0.1. They cover the same 100 Mafia and 100 Avalon game IDs as the replays. The browser loads saved aggregates; no models or judges are called.</p><p>Overview counts come from the replay manifest. The source report’s survey-call counters include more calls than the accepted belief reports exported for replay, so they are not used as replay survey counts.</p></div>
+        <div><h3>What the estimates mean</h3><p>Most metrics pool their numerator and denominator over all eligible observations. “All models” is a pooled estimate, not the average of the seven model estimates. Intervals resample whole games, preserving the dependence between observations within each game.</p><p>Role assignments and sample sizes differ across models. Small cells and overlapping intervals do not establish a reliable ordering. Some behavioral measures are unstable with only 100 games.</p></div>
+        <div><h3>Beliefs and role knowledge</h3><p>Mafia detection AUC uses town observers’ final pre-vote survey each day and counts ties as half. Avalon’s Servant measures exclude Merlin and evil players, who already know some roles. Mafia top-1 role accuracy counts tied top guesses as wrong.</p><p>Faction deduction predicts good when P(good) ≥ 0.5 and excludes the observer’s own row. The trend uses villagers in Mafia and Loyal Servants in Avalon. Compare it with the always-good baseline.</p></div>
+        <div><h3>Social behavior and ratings</h3><p>False-accusation rates count evil speeches accusing a genuinely good player; they do not measure every kind of deception. Accusation honesty compares the target with the speaker’s highest private suspicion among living players; ties count as honest.</p><p>Solo Elo starts at 1500 with K = 32 and scale 400, averages pairwise updates, and is recentered to mean 1500. It is relative within a game type. Belief updates describe self-reports, not verified internal reasoning.</p></div>
+      </div>
+      <p id="metrics-provenance" class="muted metric-caption"></p>
+    </section>
+    <footer>Social Observatory <span>Seven models. Two games. A shared record.</span><a href="./data/manifest.json">Dataset manifest</a></footer>
+  </main>
+  <noscript>This viewer needs JavaScript. <a href="./data/metrics.json">Download the metrics JSON</a> to inspect the results.</noscript>
+</body>
+</html>
