@@ -38,6 +38,15 @@ and that game's belief surveys on demand. It makes no model requests and needs n
   scores; player view shows only that player's score. Spectator hides the scores.
 - Speech footers show who received a yield. Each vote includes individual ballots
   and a final tally, including abstentions and the required approval/elimination count.
+- Click any message/event, or its keyboard-accessible Inspect checkpoint button,
+  to open research details without moving the replay. Choose before/after the event
+  and a player to compare their perceived role with the equal-weight average of
+  other players' latest reports about them. The subject's own belief is excluded.
+- Checkpoint details reveal everyone's private survey fields, regardless of replay
+  perspective. Each respondent contributes at most one report at or before the
+  checkpoint; earlier reports (including eliminated players) are labelled. Missing
+  target distributions do not enter the average. Expand any respondent or all
+  respondents to see their role beliefs, perceived role, and stated voting intention.
 
 Perspectives are display filters, not access controls. The public JSON includes hidden
 roles and private events. Surveys are elicited self-reports, not verified internal reasoning.

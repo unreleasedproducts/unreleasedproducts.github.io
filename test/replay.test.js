@@ -8,7 +8,50 @@ import {
   transcriptEntries,
   pollResponses,
   voteTally,
+  checkpointSurveys,
+  perceivedRoleComparison,
 } from "../docs/replay.js";
+
+test("checkpoint comparison uses one latest report per other player, excludes self and future reports", () => {
+  const recording = { players: [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }] };
+  const report = (player, position, mafia) => ({ player, position, checkpoint: `e${position}`, beliefs: [{ player: "a", probabilities: { mafia, villager: 1 - mafia } }] });
+  const surveys = [
+    report("b", 7, 1), // future response deliberately comes first
+    report("a", 4, 1), // a's own true-role belief must not enter the average
+    report("b", 2, .9),
+    report("c", 3, .6), // still the latest report for this respondent
+    report("b", 4, .2),
+    report("b", 1, 0), // arrival order is not checkpoint order
+  ];
+  surveys[1].perceivedRole = { mafia: .1, villager: .9 };
+  const snapshot = checkpointSurveys(recording, surveys, 4);
+  assert.equal(snapshot[1].survey.position, 4);
+  assert.equal(snapshot[2].survey.position, 3);
+  assert.equal(snapshot[3].survey, null);
+  const comparison = perceivedRoleComparison(snapshot, "a");
+  assert.deepEqual(comparison.contributors.map(row => row.player.id), ["b", "c"]);
+  assert.equal(comparison.rows.find(row => row.role === "mafia").average, .4);
+  assert.equal(comparison.rows.find(row => row.role === "mafia").perceived, .1);
+  assert.equal(perceivedRoleComparison(checkpointSurveys(recording, surveys, 0), "a").rows.length, 0);
+  const before = perceivedRoleComparison(checkpointSurveys(recording, surveys, 3), "a");
+  assert.equal(before.rows.find(row => row.role === "mafia").average, .75);
+  assert.equal(before.rows.find(row => row.role === "mafia").perceived, null);
+});
+
+test("missing target beliefs do not dilute the average and missing perceived roles remain unknown", () => {
+  const snapshot = [
+    { player: { id: "a" }, survey: { perceivedRole: { mafia: .3 }, beliefs: [] } },
+    { player: { id: "b" }, survey: { beliefs: [{ player: "a", probabilities: { mafia: .2, villager: .8 } }] } },
+    { player: { id: "c" }, survey: { beliefs: [{ player: "b", probabilities: { mafia: 1 } }] } },
+    { player: { id: "d" }, survey: null },
+  ];
+  const comparison = perceivedRoleComparison(snapshot, "a");
+  assert.equal(comparison.contributors.length, 1);
+  assert.deepEqual(comparison.rows, [
+    { role: "mafia", perceived: .3, average: .2 },
+    { role: "villager", perceived: null, average: .8 },
+  ]);
+});
 
 test("polls stay between their original events, including repeated polls after a declined turn", () => {
   const recording = {

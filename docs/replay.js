@@ -84,6 +84,39 @@ export function knownPlayers(game, player) {
   return [];
 }
 
+// One frozen report per respondent, never a response from a future checkpoint.
+export function checkpointSurveys(game, surveys, position) {
+  return game.players.map(player => ({
+    player,
+    survey: latestSurvey(surveys, player.id, position),
+  }));
+}
+
+export function perceivedRoleComparison(snapshot, subject) {
+  const own = snapshot.find(row => row.player.id === subject)?.survey;
+  const contributors = snapshot.flatMap(({ player, survey }) => {
+    if (player.id === subject || !survey) return [];
+    const belief = survey.beliefs.find(b => b.player === subject);
+    const probabilities = belief?.probabilities;
+    if (!probabilities || !Object.keys(probabilities).length ||
+        !Object.values(probabilities).every(v => Number.isFinite(v) && v >= 0 && v <= 1)) return [];
+    return [{ player, survey, probabilities }];
+  });
+  const roles = [...new Set([
+    ...Object.keys(own?.perceivedRole || {}),
+    ...contributors.flatMap(row => Object.keys(row.probabilities)),
+  ])].sort();
+  return {
+    own,
+    contributors,
+    rows: roles.map(role => ({
+      role,
+      perceived: own?.perceivedRole?.[role] ?? null,
+      average: contributors.length ? contributors.reduce((sum, row) => sum + (row.probabilities[role] || 0), 0) / contributors.length : null,
+    })),
+  };
+}
+
 // Polls are attached to the next logged event so event IDs and survey checkpoints
 // stay unchanged. Multiple polls can precede one message when turns are declined.
 export function transcriptEntries(game, perspective, position) {

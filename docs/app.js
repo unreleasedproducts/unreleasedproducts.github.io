@@ -9,7 +9,9 @@ import {
   transcriptEntries,
   pollResponses,
   voteTally,
-} from "./replay.js";
+  checkpointSurveys,
+  perceivedRoleComparison,
+} from "./replay.js?v=checkpoint-1";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value = "") =>
@@ -33,6 +35,7 @@ let timer,
   surveyRequest = 0;
 const gameCache = new Map();
 const surveyCache = new Map();
+let detailEventPosition = null;
 const name = (id) =>
   game?.players.find((p) => p.id === id || p.name === id)?.name ||
   id ||
@@ -128,6 +131,8 @@ async function loadGame(
     return;
   }
   const version = ++request;
+  $("#message-detail").close();
+  detailEventPosition = null;
   ++surveyRequest;
   stop();
   $("#replay").setAttribute("aria-busy", "true");
@@ -227,9 +232,17 @@ async function loadSurveys() {
     surveys = loaded;
     cache(surveyCache, id, loaded);
     renderInspector();
+    renderMessageDetail();
   } catch (error) {
     if (version !== surveyRequest || game.id !== id) return;
     $("#survey-status").textContent = "Beliefs could not be loaded.";
+    if ($("#message-detail").open) {
+      $("#detail-status").textContent = "Beliefs could not be loaded. ";
+      const retry = document.createElement("button");
+      retry.textContent = "Try again";
+      retry.onclick = () => { $("#detail-status").textContent = "Loading recorded surveys…"; void loadSurveys(); };
+      $("#detail-status").append(retry);
+    }
     showError(error, () => loadSurveys());
   }
 }
@@ -268,17 +281,19 @@ function renderTally(event) {
 }
 function renderTranscript() {
   const events = transcriptEntries(game, perspective, position);
+  const positions = new Map(game.events.map((event, index) => [event.id, index + 1]));
   const rendered = events.map((e, i) => {
     if (e.type === "urgency-poll") return renderPoll(e);
     const phase =
       game.game === "mafia" ? `Day ${e.day || 1}` : `Mission ${e.mission || 1}`;
     const votes = e.ballots || e.votes || [];
-    return `<article class="event ${e.type === "speech" ? "" : "system"} ${e.visibility !== "public" ? "private" : ""} ${i === events.length - 1 ? "latest" : ""}">
+    return `<article data-event-position="${positions.get(e.id)}" class="event inspectable ${e.type === "speech" ? "" : "system"} ${e.visibility !== "public" ? "private" : ""} ${i === events.length - 1 ? "latest" : ""}">
       <div class="event-head"><strong>${esc(e.player ? name(e.player) : "Game moderator")}</strong><small>${phase} · ${esc(title(e.type))}</small>
       ${e.visibility !== "public" ? '<span class="tag">Private</span>' : ""}<small class="event-index">${esc(e.id)}</small></div>
       <p>${esc(e.text)}</p>${Array.isArray(votes) && votes.length ? `<div class="ballots">${votes.map((v) => `<span>${esc(name(v.player))}: ${v.approve === undefined ? esc(name(v.target)) : v.approve ? "Approve" : "Reject"}</span>`).join("")}</div>` : ""}
       ${["votes", "team-vote"].includes(e.type) ? renderTally(e) : ""}
-      ${e.type === "speech" && Object.hasOwn(e, "yieldTo") ? `<div class="yield-note">${e.yieldTo ? `Yields to <strong>${esc(name(e.yieldTo))}</strong>` : "No yield"}</div>` : ""}</article>`;
+      ${e.type === "speech" && Object.hasOwn(e, "yieldTo") ? `<div class="yield-note">${e.yieldTo ? `Yields to <strong>${esc(name(e.yieldTo))}</strong>` : "No yield"}</div>` : ""}
+      <button type="button" class="inspect-message" aria-label="Inspect surveys at event ${esc(e.id)}" aria-haspopup="dialog">Inspect checkpoint</button></article>`;
   });
   let transcript = rendered.join("");
   if (game.game === "avalon") {
@@ -311,6 +326,71 @@ function renderTranscript() {
   if ($("#follow").checked)
     $("#transcript").scrollTop = $("#transcript").scrollHeight;
 }
+function distributionRows(probabilities) {
+  const entries = Object.entries(probabilities || {});
+  if (!entries.length) return '<p class="muted">Not recorded.</p>';
+  return entries.map(([role, probability]) => {
+    const valid = Number.isFinite(probability);
+    const percent = valid ? Math.max(0, Math.min(100, probability * 100)) : 0;
+    return `<div class="belief-row"><span>${esc(roleName(role))}</span><span class="bar" aria-hidden="true"><i style="width:${percent}%"></i></span><span>${valid ? (probability * 100).toFixed(1) + "%" : "—"}</span></div>`;
+  }).join("");
+}
+
+function renderMessageDetail() {
+  if (!$("#message-detail").open || detailEventPosition == null) return;
+  const event = game.events[detailEventPosition - 1];
+  const checkpointPosition = detailEventPosition - ($("#detail-timing").value === "before" ? 1 : 0);
+  const checkpoint = game.events[checkpointPosition - 1]?.id || "before the first event";
+  const subject = $("#detail-player").value;
+  $("#detail-title").textContent = `${event.id} · ${event.player ? name(event.player) : "Game moderator"} · ${game.game === "mafia" ? `Day ${event.day || 1}` : `Mission ${event.mission || 1}`}`;
+  $("#detail-message").textContent = event.text || title(event.type);
+  $("#detail-content").hidden = !surveys;
+  if (!surveys) {
+    $("#detail-status").textContent = "Loading recorded surveys…";
+    return;
+  }
+  const snapshot = checkpointSurveys(game, surveys, checkpointPosition);
+  const available = snapshot.filter(row => row.survey).length;
+  const exact = snapshot.filter(row => row.survey?.position === checkpointPosition).length;
+  $("#detail-status").textContent = `Checkpoint ${checkpoint} · ${available}/${snapshot.length} players have a report · ${exact} at this event, ${available - exact} carried forward.`;
+  const comparison = perceivedRoleComparison(snapshot, subject);
+  $("#role-comparison-title").textContent = `${name(subject)}: perceived role vs. others’ reports`;
+  $("#detail-comparison-note").textContent = `${comparison.own?.perceivedRole ? `Self-perception reported at ${comparison.own.checkpoint}${comparison.own.position < checkpointPosition ? " (carried forward)" : ""}.` : "No self-perception report at or before this checkpoint."} This is how the player thinks others see them, not their belief about their actual role.`;
+  const cell = (value, className) => `<td><div class="comparison-probability ${className}"><span class="bar" aria-hidden="true"><i style="width:${value == null ? 0 : Math.max(0, Math.min(100, value * 100))}%"></i></span><strong>${value == null ? "—" : (value * 100).toFixed(1) + "%"}</strong></div></td>`;
+  $("#detail-comparison").innerHTML = comparison.rows.length
+    ? comparison.rows.map(row => `<tr><th scope="row">${esc(roleName(row.role))}</th>${cell(row.perceived, "perceived")}${cell(row.average, "reported")}</tr>`).join("")
+    : '<tr><td colspan="3">No role distributions available at this checkpoint.</td></tr>';
+  $("#detail-contributors").textContent = comparison.contributors.length
+    ? `Equal-weight average of ${comparison.contributors.length} other players; excludes ${name(subject)}’s own report. Includes all factions and any eliminated players with a prior report. Contributors: ${comparison.contributors.map(row => `${row.player.name} (${row.survey.checkpoint}${row.survey.position < checkpointPosition ? ", earlier" : ""})`).join(", ")}.`
+    : "No other player has reported a role distribution about this player at or before this checkpoint.";
+  $("#detail-surveys").innerHTML = snapshot.map(({ player: person, survey }) => {
+    if (!survey) return `<div class="checkpoint-missing"><strong>${esc(person.name)}</strong><span>No report at or before this checkpoint.</span></div>`;
+    return `<details class="checkpoint-survey" ${person.id === subject ? "open" : ""}><summary><strong>${esc(person.name)}</strong><span>${esc(modelName(person.model))}</span><span class="survey-checkpoint">${esc(survey.checkpoint)} · ${survey.position === checkpointPosition ? "At this event" : "Earlier report"}</span></summary><div class="checkpoint-survey-body">
+      <p class="muted">Intended vote: <strong>${esc(survey.intendedVote == null ? "Not recorded" : name(survey.intendedVote))}</strong></p>
+      <div class="belief-person self-perception"><strong>How ${esc(person.name)} thinks others see them</strong>${distributionRows(survey.perceivedRole)}</div>
+      <h4>Reported role beliefs about each player</h4><div class="survey-belief-grid">${survey.beliefs.map(belief => `<div class="belief-person"><strong>${esc(name(belief.player))}${belief.player === person.id ? " (self)" : ""}</strong>${distributionRows(belief.probabilities)}</div>`).join("") || '<p class="muted">No role beliefs recorded.</p>'}</div>
+    </div></details>`;
+  }).join("");
+  $("#detail-expand").textContent = "Expand all";
+}
+
+function openMessageDetail(eventPosition) {
+  if (!game || $("#replay").getAttribute("aria-busy") === "true") return;
+  const event = game.events[eventPosition - 1];
+  if (!event) return;
+  stop();
+  detailEventPosition = eventPosition;
+  $("#detail-timing").value = "after";
+  $("#detail-player").innerHTML = game.players.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+  $("#detail-player").value = player(event.player)?.id || game.players[0].id;
+  for (const node of document.querySelectorAll("[data-event-position]"))
+    node.classList.toggle("inspecting", Number(node.dataset.eventPosition) === eventPosition);
+  $("#message-detail").showModal();
+  renderMessageDetail();
+  $("#message-detail").scrollTop = 0;
+  if (!surveys) void loadSurveys();
+}
+
 function renderInspector() {
   const research = perspective === "researcher";
   const spectator = perspective === "spectator";
@@ -478,6 +558,24 @@ $("#speed").onchange = () => {
   }
 };
 $("#about-button").onclick = () => $("#about").showModal();
+$("#transcript").onclick = (event) => {
+  const entry = event.target.closest("[data-event-position]");
+  if (!entry || (window.getSelection()?.isCollapsed === false && !event.target.closest("button"))) return;
+  openMessageDetail(Number(entry.dataset.eventPosition));
+};
+$("#detail-close").onclick = () => $("#message-detail").close();
+$("#message-detail").onclose = () => {
+  detailEventPosition = null;
+  for (const node of document.querySelectorAll(".event.inspecting")) node.classList.remove("inspecting");
+};
+$("#detail-timing").onchange = renderMessageDetail;
+$("#detail-player").onchange = renderMessageDetail;
+$("#detail-expand").onclick = () => {
+  const rows = [...document.querySelectorAll("#detail-surveys details")];
+  const expand = rows.some(row => !row.open);
+  for (const row of rows) row.open = expand;
+  $("#detail-expand").textContent = expand ? "Collapse all" : "Expand all";
+};
 $(".skip").onclick = (event) => {
   event.preventDefault();
   $("#replay").focus();

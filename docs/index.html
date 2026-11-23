@@ -9,8 +9,8 @@
     />
     <meta name="color-scheme" content="light" />
     <title>Social Observatory · Game archive</title>
-    <link rel="stylesheet" href="./styles.css?v=metrics-1" />
-    <script type="module" src="./app.js?v=29b19f3"></script>
+    <link rel="stylesheet" href="./styles.css?v=checkpoint-1" />
+    <script type="module" src="./app.js?v=checkpoint-1"></script>
   </head>
   <body>
     <a class="skip" href="#replay">Skip to replay</a>
@@ -143,6 +143,7 @@
               >
             </div>
           </div>
+          <p class="checkpoint-hint">Click a message to inspect everyone’s surveys and perceived roles at that point.</p>
           <div
             id="transcript"
             class="transcript"
@@ -190,6 +191,34 @@
         ><a href="./data/manifest.json">Dataset manifest</a>
       </footer>
     </main>
+    <dialog id="message-detail" aria-labelledby="detail-title">
+      <div class="detail-header">
+        <div><p class="eyebrow">CHECKPOINT DETAILS · RESEARCH DATA</p><h2 id="detail-title">Message details</h2></div>
+        <button id="detail-close" type="button">Close</button>
+      </div>
+      <div class="detail-body">
+        <p id="detail-message" class="detail-message"></p>
+        <p class="muted">This detail view reveals all players’ private survey reports. Your replay perspective and position stay unchanged.</p>
+        <div class="detail-filters">
+          <label>Survey checkpoint<select id="detail-timing"><option value="after">After this event</option><option value="before">Before this event</option></select></label>
+          <label>Compare perceived role for<select id="detail-player"></select></label>
+        </div>
+        <p id="detail-status" role="status"></p>
+        <div id="detail-content" hidden>
+          <section aria-labelledby="role-comparison-title">
+            <h3 id="role-comparison-title">Perceived role vs. others’ reports</h3>
+            <p id="detail-comparison-note" class="muted"></p>
+            <div class="role-comparison-wrap"><table class="role-comparison"><thead><tr><th scope="col">Role</th><th scope="col">How I think others see me</th><th scope="col">Others’ average about me</th></tr></thead><tbody id="detail-comparison"></tbody></table></div>
+            <p id="detail-contributors" class="muted"></p>
+          </section>
+          <section class="checkpoint-surveys" aria-labelledby="checkpoint-surveys-title">
+            <div class="detail-section-head"><h3 id="checkpoint-surveys-title">Everyone’s surveys</h3><button id="detail-expand" type="button">Expand all</button></div>
+            <p class="muted">Latest report at or before the selected checkpoint, including eliminated players’ last reports. Earlier reports are labelled; missing reports are never filled with future answers.</p>
+            <div id="detail-surveys"></div>
+          </section>
+        </div>
+      </div>
+    </dialog>
     <dialog id="about">
       <form method="dialog">
         <button class="close" aria-label="Close data details">Close</button>

@@ -755,6 +755,61 @@ h1 {
   padding: 12px 24px 26px;
   scrollbar-gutter: stable;
 }
+.checkpoint-hint { margin: 0; padding: 12px 24px; color: var(--muted); background: #f0f7f6; font-size: .875rem; line-height: 1.5; }
+.event.inspectable { cursor: pointer; }
+.event.inspectable:hover, .event.inspecting { outline: 2px solid #8abbb4; outline-offset: -2px; border-radius: 6px; }
+.inspect-message { margin-top: 10px; padding: 5px 9px; font-size: .8rem; color: var(--accent); }
+dialog#message-detail { width: min(1000px, calc(100vw - 32px)); max-width: none; max-height: 90vh; padding: 0; overflow-y: auto; }
+.detail-header { position: sticky; top: 0; z-index: 2; background: white; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 24px; }
+.detail-header .eyebrow { margin: 0 0 4px; }
+.detail-header h2 { margin: 0; font-size: 1.2rem; }
+.detail-body { padding: 0 24px 24px; }
+.detail-message { background: #f3f6f8; border-left: 3px solid var(--accent); padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow-y: auto; line-height: 1.6; }
+.detail-filters { display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0; }
+.detail-filters label { display: grid; gap: 7px; flex: 1; min-width: 220px; font-size: .9rem; }
+.detail-filters select { width: 100%; }
+#detail-status { color: var(--accent); font-size: .9rem; }
+#detail-content h3 { margin: 24px 0 10px; font-size: 1.1rem; }
+.role-comparison-wrap { overflow-x: auto; }
+.role-comparison { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.role-comparison th, .role-comparison td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; }
+.role-comparison thead th { font-size: .875rem; line-height: 1.5; }
+.role-comparison th:first-child { width: 22%; }
+.role-comparison td { width: 39%; }
+.comparison-probability { display: flex; align-items: center; gap: 12px; }
+.comparison-probability .bar { flex: 1; min-width: 40px; }
+.comparison-probability strong { min-width: 54px; text-align: right; font-variant-numeric: tabular-nums; }
+.comparison-probability.perceived .bar i { background: #8056aa; }
+.role-comparison thead th:nth-child(2) { color: #73489c; }
+.role-comparison thead th:nth-child(3) { color: var(--accent); }
+.checkpoint-surveys { margin-top: 28px; border-top: 1px solid var(--line); }
+.detail-section-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.checkpoint-survey { border: 1px solid var(--line); border-radius: 8px; margin: 12px 0; overflow: hidden; }
+.checkpoint-survey summary { cursor: pointer; padding: 14px; background: #f5f8fa; font-size: .9rem; }
+.checkpoint-survey summary span { color: var(--muted); margin-left: 12px; font-size: .875rem; }
+.checkpoint-survey .survey-checkpoint { float: right; }
+.checkpoint-survey-body { padding: 0 16px 16px; }
+.checkpoint-survey-body h4 { font-size: .95rem; margin: 24px 0 0; }
+.survey-belief-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 24px; }
+.checkpoint-survey .belief-person { min-width: 0; }
+.checkpoint-survey .self-perception { max-width: 400px; padding: 14px; background: #f5f0fa; border-radius: 7px; }
+.checkpoint-survey .belief-row { grid-template-columns: 85px 1fr 48px; }
+.checkpoint-missing { display: flex; justify-content: space-between; gap: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; margin: 12px 0; font-size: .875rem; color: var(--muted); }
+@media (max-width: 780px) {
+  .survey-belief-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .checkpoint-survey .survey-checkpoint { float: none; display: block; margin: 6px 0 0; }
+  .detail-body { padding: 0 14px 18px; }
+  .detail-header { padding: 14px; }
+  .role-comparison th, .role-comparison td { padding: 10px 6px; }
+}
+@media (max-width: 500px) {
+  .survey-belief-grid { grid-template-columns: 1fr; }
+  .comparison-probability { flex-direction: column-reverse; align-items: stretch; gap: 6px; }
+  .comparison-probability strong { text-align: left; }
+  .comparison-probability .bar { flex: none; }
+  .checkpoint-survey summary span { display: block; margin: 6px 0 0; }
+  .detail-filters label { min-width: 0; flex-basis: 100%; }
+}
 .event {
   padding: 20px 0;
   border-bottom: 1px solid #e9eef1;
